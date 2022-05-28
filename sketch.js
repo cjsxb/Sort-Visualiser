@@ -35,8 +35,6 @@ let weirdSorts = [
 let state = "menu";
 let substate = "none";
 
-let time = 100;
-let animTime;
 let animBool = true;
 let ready = false;
 let beginTime;
@@ -57,22 +55,27 @@ let rangeSlider, columnSlider, timeSlider;
 
 let counter = 0;
 
+let beginMS;
+
+let dif;
+
+let once = false;
+
 // Previous slider values for update detection
-let preCV, preRV, preTV;
+let preCV, preRV, preTV, preDV;
 
 function setup() {
   createCanvas(900, 900);
 
-  generateArray(10, 100);
-
-  rangeSlider = createSlider(0, 1000, 100);
+  // Min, Max, Default, Step (Optional)
+  rangeSlider = createSlider(20, 1000, 100);
   rangeSlider.position(20, 30);
-  columnSlider = createSlider(4, 250, 0);
+  columnSlider = createSlider(4, 250, 5);
   columnSlider.position(180, 30);
-  timeSlider = createSlider(0, 10000, 100);
+  timeSlider = createSlider(0, 3000, 10000);
   timeSlider.position(340, 30);
 
-  animTime = timeSlider.value();
+  generateArray(columnSlider.value(), rangeSlider.value());
 }
 
 // To minimise the use of fill()
@@ -87,10 +90,6 @@ function draw() {
   clear();
   background(241, 241, 241);
   fill(255);
-
-  let rV = rangeSlider.value();
-  let cV = columnSlider.value();
-  let tV = timeSlider.value();
 
   blackText("Number Range", rangeSlider.x, 28, 15);
   blackText("Columns", columnSlider.x, 28, 15);
@@ -153,45 +152,75 @@ function draw() {
 
   // Update the positions of the graph and add the line
   if (state == "update") {
-    
+    if (columnSlider.value() != preCV || rangeSlider.value() != preRV) {
+      clearTimeout(animTimeout);
+      generateArray(columnSlider.value(), rangeSlider.value());
+    }
+
+    updateGraph();
+
     // Exit Button
     fill(255, 0, 0);
     rect(850, 25, 25, 25);
     blackText("X", 855, 46, 22.5);
-    fill(255);
-    
+
     // Animation Button
     if (animBool == true) {
-      fill(0, 255, 120);
-
-    }
-    else {
+      fill(0, 200, 255);
+    } else {
       fill(255);
     }
-    
-    // Animate Button
     rect(815, 25, 25, 25);
     blackText("A", 820, 46, 22.5);
-    fill(255);
 
-    if (cV != preCV || rV != preRV) {
-      clearTimeout(animTimeout);
-      generateArray(cV, rV);
-      algorithmState();
-    }
+    // Start Button
+    fill(0, 255, 120);
+    rect(780, 25, 25, 25);
+    blackText("S", 785, 46, 22.5);
 
-    if (tV != preTV) {
-      clearTimeout(animTimeout);
-      algorithmState();
-      animTime = timeSlider.value();
-    }
-    updateGraph();
+    // Generate Button
+    fill(255, 165, 0);
+    rect(745, 25, 25, 25);
+    blackText("1", 750, 46, 22.5);
+
     line(0, 700, 900, 700);
   }
+  preCV = columnSlider.value();
+  preRV = rangeSlider.value();
+  preTV = timeSlider.value();
+}
 
-  preCV = cV;
-  preRV = rV;
-  preTV = tV;
+function generateArray(length, range) {
+  print("Generated new array!");
+
+  isSorted = false;
+  counter = 0;
+
+  array.splice(length, preRV);
+
+  // Create randomly generated data-array
+  for (let i = 0; i < length; i++) {
+    array[i] = int(random(range));
+  }
+
+  columnWidth = spaceX / array.length;
+
+  // Shorten the 2D array to new length
+  Indexes.splice(array.length, Indexes.length);
+
+  // Create 2D Indexes array (for animation)
+  for (let i = 0; i < array.length; i++) {
+    Indexes[i] = [];
+    Indexes[i][0] = i;
+    Indexes[i][1] = i;
+    Indexes[i][2] = 0;
+  }
+
+  print("GEN ARRAY: " + array);
+  print("GEN INDEXES " + Indexes);
+
+  // Shorten the 2D array to new length
+  Indexes.splice(array.length, Indexes.length);
 }
 
 function mousePressed() {
@@ -202,10 +231,12 @@ function mousePressed() {
     findButton(weirdSorts, 0);
   }
   if (state == "update") {
+    // Exit Button Check
     if (mouseX > 850 && mouseX < 875 && mouseY > 25 && mouseY < 50) {
       state = "menu";
-      clearTimeout(animTimeout)
+      clearTimeout(animTimeout);
     }
+    // Animation Button Check
     if (mouseX > 815 && mouseX < 840 && mouseY > 25 && mouseY < 50) {
       if (animBool == true) {
         animBool = false;
@@ -213,11 +244,35 @@ function mousePressed() {
         animBool = true;
       }
     }
-   }
+    // Start Button Check
+    if (mouseX > 780 && mouseX < 805 && mouseY > 25 && mouseY < 50) {
+      animateArrays();
+    }
+    // Randomise Button Check
+    if (mouseX > 745 && mouseX < 770 && mouseY > 25 && mouseY < 50) {
+      once = true;
+      animateArrays();
+    }
+  }
+}
+
+// Find which sort button type was pressed in the menu
+function findButton(sortType, ex) {
+  for (let i = 0; i < 3; i++) {
+    if (mouseX > sortType[i + ex][1] && mouseX < sortType[i + ex][1] + 250) {
+      if (mouseY > sortType[i + ex][2] && mouseY < sortType[i + ex][2] + 100) {
+        sortSelected = sortType[i + ex];
+        substate = sortType[i + ex][0];
+        generateArray(columnSlider.value(), rangeSlider.value());
+        algorithmState();
+        state = "update";
+      }
+    }
+  }
 }
 
 function algorithmState() {
-  print("Algorithm State called")
+  print("Algorithm State called");
   switch (substate) {
     case "Quick":
       print("Quick");
@@ -242,6 +297,7 @@ function algorithmState() {
       break;
 
     case "Insertion":
+      animateArrays();
       print("Insertion");
       break;
 
@@ -271,18 +327,60 @@ function algorithmState() {
   }
 }
 
-// Find which sort button type was pressed in the menu
-function findButton(sortType, ex) {
-  for (let i = 0; i < 3; i++) {
-    if (mouseX > sortType[i + ex][1] && mouseX < sortType[i + ex][1] + 250) {
-      if (mouseY > sortType[i + ex][2] && mouseY < sortType[i + ex][2] + 100) {
-        sortSelected = sortType[i + ex];
-        substate = sortType[i + ex][0];
-        algorithmState();
-        state = "update";
-      }
+// Calculate Pre-Sort Variables and check where to go next
+function animateArrays() {
+  
+  ready = false;
+
+  // Stop recursion if array is sorted
+  if (checkIfSorted() == true) {
+    print("Sorted");
+    isSorted = true;
+    return;
+  }
+
+  for (let i = 0; i < array.length; i++) {
+    Indexes[i][2] = 0;
+  }
+
+  beginMS = millis();
+
+  // Calculate which sort function to call by configuring the string
+  changeName = substate;
+  changeName = changeName.toLowerCase();
+  changeName = changeName + "Sort";
+
+  // Call appropriate sort with the string calculated above
+  window[changeName]();
+}
+
+// Called at the beginning of each loop to check if sorting is still required
+function checkIfSorted() {
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] > array[i + 1]) {
+      return false;
     }
   }
+  return true;
+}
+
+function checkEnd() {
+  // If animation is toggled on, it will calculate difference[i] and timeout.
+  // If otherwise, just call now as we are ready.
+  if (animBool == true) {
+    indexDifference();
+  } else {
+    animTimeout = setTimeout(animateArrays, timeSlider.value());
+    print("Sorting Display Sequence. Start.");
+  }
+}
+
+function indexDifference() {
+  // We're ready.
+  animTimeout = setTimeout(animateArrays, timeSlider.value());
+  beginTime = millis();
+  ready = true;
+  print("Animation Sequence. Start.");
 }
 
 function find(value) {
@@ -304,29 +402,46 @@ function find(value) {
   return temp;
 }
 
-function generateArray(length, range) {
-  print("Generated new array!");
-  
-  isSorted = false;
-  counter = 0;
+function updateGraph() {
+  // Rect Formula: rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
 
-  // Create randomly generated data-array
-  for (let i = 0; i < length; i++) {
-    array[i] = int(random(range));
-  }
-
-  array.splice(length, preRV);
-  columnWidth = spaceX / array.length;
-
-  // Create 2D Indexes array (for animation)
   for (let i = 0; i < array.length; i++) {
-    Indexes[i] = [];
-    Indexes[i][0] = i;
-    Indexes[i][1] = i;
-  }
+    // Scale Y of columns with max value of array
+    columnHeight = array[i] * (spaceY / find("max"));
+    
+    blackText(str(array[i]), (25 + columnWidth * i) + columnWidth / 3, 700 + columnWidth / 3, columnWidth / 3);
+    blackText((Indexes[i][1]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*2), columnWidth / 3);
+    blackText((Indexes[i][2]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*3), columnWidth / 3);
 
-  // Shorten the 2D array to new length
-  Indexes.splice(array.length, Indexes.length);
+    if (animBool == false || ready == false || isSorted == true) {
+      fill(255, 255, 255, 100);
+      rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
+      continue;
+    }
+
+    if (Indexes[i][2] == 0) {
+      fill(255, 255, 255, 100);
+      rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
+    } else {
+      
+      // oldX = Array position (i) - change of index ([i][2])
+      oldX = 25 + (columnWidth * (i - Indexes[i][2]));
+      // newX = Array position(i)
+      newX = 25 + (columnWidth * i);
+      distanceToTravel = newX - oldX;
+
+      if (distanceToTravel > 0) {
+        fill(0, 255, 0);
+      } else {
+        fill(255, 0, 0);
+      }    
+
+      currentTime = millis();
+      elapsed = currentTime - beginTime;
+
+      rect(oldX + (elapsed / timeSlider.value()) * distanceToTravel, 700 - columnHeight, columnWidth, columnHeight);
+    }
+  }
 }
 
 // Sort numbers then update current index
@@ -334,177 +449,49 @@ function bubbleSort() {
   for (let i = 0; i < array.length; i++) {
     if (array[i] > array[i + 1]) {
       [array[i], array[i + 1]] = [array[i + 1], array[i]];
+      
+      Indexes[i][2] = Indexes[i+1][1] - Indexes[i][1];
+      Indexes[i+1][2] = Indexes[i][1] - Indexes[i+1][1];
 
-      // Swap identifiers & Update animation array
-      if (animBool == true) {
-        [Indexes[i][1], Indexes[i + 1][1]] = [Indexes[i + 1][1], Indexes[i][1]];
-      }
+      // Swap indexes
+      [Indexes[i][1], Indexes[i+1][1]] = [Indexes[i+1][1], Indexes[i][1]];
+    
     }
   }
   checkEnd();
 }
 
 function selectionSort() {
-  print("Selection sort " + counter)
-  i = counter;
-  for (let j = i + 1; j < array.length; j++) {
-    if (array[counter] > array[j]) {
-      counter = j;
+  let min = counter;
+  for (let j = counter + 1; j < array.length; j++) {
+    if (array[min] > array[j]) {
+      min = j;
     }
   }
-  if (i != counter) {
-    
-    [array[i], array[counter]] = [array[counter], array[i]];
-    
-    if (animBool == true) {
-      [Indexes[i][1], Indexes[counter][1]] = [Indexes[counter][1], Indexes[i][1]];
-    }
-    
+  if (min != counter) {
+    [array[counter], array[min]] = [array[min], array[counter]];
+
+    // OMFG
+    Indexes[counter][2] = counter - min;
+    Indexes[min][2] = min - counter;
+
+    // Swap Indexes
+    //[Indexes[counter][1], Indexes[min][1]] = [Indexes[min][1], Indexes[counter][1]];
   }
   checkEnd();
-  counter=counter+1;
+  counter = counter + 1;
 }
 
-function checkEnd() {
-  
-  if (animBool == true) {
-    updateIndexes(3); 
-    
-  } else {
-    
-    checkIfSorted()
-
-    if (isSorted == false) {
-      animTimeout = setTimeout(window[changeName], animTime);
-      ready = true;
-      print('Animation Sequence. Start.');
-    } else {
-      print('Algorithm Sorted. Stopping.') 
-    }    
+function insertionSort() {
+  counter = counter + 1;
+  let key = array[counter];
+  let j = counter - 1;
+  while (j >= 0 && array[j] > key) {
+    array[j + 1] = array[j];
+    Indexes[j + 1][3] = Indexes[j][3];
+    j = j - 1;
   }
-}
-
-function indexDifference() {
-  for (let i = 0; i < array.length; i++) {
-    // Difference = current index - previous index
-    difference[i] = Indexes[i][3] - Indexes[i][2];
-    
-    // Now that the prep has finished, we need to set the timer for the animation
-    // we're also ready to updateGraph()
-    
-  }
-  
-  checkIfSorted()
-    
-  if (isSorted == false) {
-    beginTime = millis();
-    animTimeout = setTimeout(animateArrays, animTime);
-    ready = true;
-    print('Animation Sequence. Start.');
-  } else {
-    print('Algorithm Sorted. Stopping.') 
-  }
-}
-
-// Called every second before sort and after each sort.
-function updateIndexes(column) {
-  // Pre-sort
-  if (column == 2) {
-    // Update indexes column [index, id, pI, cI]
-    for (let i = 0; i < array.length; i++) {
-      // Value = array[Indexes[i][1]]
-      // PreviousIndex = Value located at identifier position in array
-      Indexes[i][2] = Indexes[i][1];
-    }
-    // Call bubble sort - Mid-sorting
-    window[changeName]();
-    
-    // Post-sort
-  } else if (column == 3) {
-    // Update identifier with new position (where the value has gone)
-    for (let i = 0; i < array.length; i++) {
-      Indexes[i][3] = Indexes[i][1];
-    }
-    indexDifference();
-  }
-}
-
-// Redefine arrays for animation sequence
-function animateArrays() {
-  
-  print("Animate Arrays!")
-  print("Animbool is " + animBool)
-  
-  changeName = substate;
-  changeName = changeName.toLowerCase();
-  changeName = changeName + "Sort";
-
-  if (animBool == false) {
-    ready=false;
-    print("AnimateBool is false")
-    window[changeName]();
-  } else {
-    print("AnimateBool is true")
-    // Calculate previous vs current index positions of numbers
-    // Update current index positions (before bubble sort)
-
-    // Pre-sorting
-    ready=false;
-    updateIndexes(2);
-  }
-  
-}
-
-function checkIfSorted() {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i] > array[i + 1]) {
-      isSorted = false;
-      return;
-    }
-  }
-  isSorted = true;
-}
-
-function updateGraph() {
-  
-  // Rect Formula: rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
-
-  fill(255);
-
-  for (let i = 0; i < array.length; i++) {
-    
-    // Scale Y of columns with max value of array
-    columnHeight = array[i] * (spaceY / find("max"));
-    
-    if (animBool == false || ready == false) {
-      rect(25+columnWidth*i, 700 - columnHeight, columnWidth, columnHeight)     
-      continue;
-    }
- 
-    if (difference[i] == 0) {
-      rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
-    }
-    else {
-
-    oldX = 25 + columnWidth * Indexes[i][3];
-    newX = 25 + columnWidth * Indexes[i][2];
-    distanceToTravel = newX - oldX;
-
-    // formula = oldX + (elapsedTime / speed) * distance
-
-    currentTime = millis();
-    elapsed = currentTime - beginTime;
-      
-    if (newX - oldX > 0) {
-      fill(0, 255, 0)
-    } else {
-      fill(255, 0, 0)
-    }
-      
-    //print("I am " + (oldX + (elapsed / animTime) * distanceToTravel) + " out of " + oldX);
-
-    rect(
-      oldX + (elapsed / animTime) * distanceToTravel, 700 - columnHeight, columnWidth, columnHeight);
-    }
-  }
+  array[j + 1] = key;
+  Indexes[j + 1][3] = key;
+  checkEnd();
 }
