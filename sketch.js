@@ -91,9 +91,9 @@ function draw() {
   background(241, 241, 241);
   fill(255);
 
-  blackText("Number Range", rangeSlider.x, 28, 15);
-  blackText("Columns", columnSlider.x, 28, 15);
-  blackText("Time", timeSlider.x, 28, 15);
+  blackText("Number Range " + str(rangeSlider.value()), rangeSlider.x, 28, 15);
+  blackText("Columns " + str(columnSlider.value()), columnSlider.x, 28, 15);
+  blackText("Time " + str(timeSlider.value()), timeSlider.x, 28, 15);
 
   if (state == "menu") {
     blackText("Welcome to p5.js Sort Visualiser!", 10, 115, 60);
@@ -114,12 +114,7 @@ function draw() {
       rect(xOffset, 375, 250, 100);
       quadSorts[i][1] = xOffset;
       quadSorts[i][2] = 375;
-      blackText(
-        quadSorts[i][0],
-        quadSorts[i][1] + 100,
-        quadSorts[i][2] + 60,
-        30
-      );
+      blackText(quadSorts[i][0], quadSorts[i][1] + 100, quadSorts[i][2] + 60, 30);
     }
 
     for (let i = 0; i < 3; i = i + 1) {
@@ -127,12 +122,7 @@ function draw() {
       rect(xOffset, 500, 250, 100);
       quadSorts[i + 3][1] = xOffset;
       quadSorts[i + 3][2] = 500;
-      blackText(
-        quadSorts[i + 3][0],
-        quadSorts[i + 3][1] + 100,
-        quadSorts[i + 3][2] + 60,
-        30
-      );
+      blackText(quadSorts[i + 3][0], quadSorts[i + 3][1] + 100, quadSorts[i + 3][2] + 60, 30);
     }
 
     blackText("Weird Sorts", 25, 665, 30);
@@ -141,16 +131,10 @@ function draw() {
       rect(xOffset, 675, 250, 100);
       weirdSorts[i][1] = xOffset;
       weirdSorts[i][2] = 675;
-      blackText(
-        weirdSorts[i][0],
-        weirdSorts[i][1] + 100,
-        weirdSorts[i][2] + 60,
-        30
-      );
+      blackText(weirdSorts[i][0], weirdSorts[i][1] + 100, weirdSorts[i][2] + 60, 30);
     }
   }
 
-  // Update the positions of the graph and add the line
   if (state == "update") {
     if (columnSlider.value() != preCV || rangeSlider.value() != preRV) {
       clearTimeout(animTimeout);
@@ -213,7 +197,6 @@ function generateArray(length, range) {
     Indexes[i] = [];
     Indexes[i][0] = i;
     Indexes[i][1] = i;
-    Indexes[i][2] = 0;
   }
 
   print("GEN ARRAY: " + array);
@@ -340,7 +323,7 @@ function animateArrays() {
   }
 
   for (let i = 0; i < array.length; i++) {
-    Indexes[i][2] = 0;
+    Indexes[i][1] = 0;
   }
 
   beginMS = millis();
@@ -409,9 +392,8 @@ function updateGraph() {
     // Scale Y of columns with max value of array
     columnHeight = array[i] * (spaceY / find("max"));
     
-    blackText(str(array[i]), (25 + columnWidth * i) + columnWidth / 3, 700 + columnWidth / 3, columnWidth / 3);
-    blackText((Indexes[i][1]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*2), columnWidth / 3);
-    blackText((Indexes[i][2]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*3), columnWidth / 3);
+    blackText(str(array[i]), (25 + columnWidth * i) + columnWidth / 3, 700 + (columnWidth / 3), columnWidth / 3);
+    blackText(str(Indexes[i][1]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*2), columnWidth / 3);
 
     if (animBool == false || ready == false || isSorted == true) {
       fill(255, 255, 255, 100);
@@ -419,14 +401,11 @@ function updateGraph() {
       continue;
     }
 
-    if (Indexes[i][2] == 0) {
+    if (Indexes[i][1] == 0) {
       fill(255, 255, 255, 100);
       rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
     } else {
-      
-      // oldX = Array position (i) - change of index ([i][2])
-      oldX = 25 + (columnWidth * (i - Indexes[i][2]));
-      // newX = Array position(i)
+      oldX = 25 + (columnWidth * (i - Indexes[i][1]));
       newX = 25 + (columnWidth * i);
       distanceToTravel = newX - oldX;
 
@@ -444,18 +423,15 @@ function updateGraph() {
   }
 }
 
-// Sort numbers then update current index
 function bubbleSort() {
   for (let i = 0; i < array.length; i++) {
-    if (array[i] > array[i + 1]) {
-      [array[i], array[i + 1]] = [array[i + 1], array[i]];
+    if (array[i] > array[i+1]) {
       
-      Indexes[i][2] = Indexes[i+1][1] - Indexes[i][1];
-      Indexes[i+1][2] = Indexes[i][1] - Indexes[i+1][1];
+      [array[i], array[i+1]] = [array[i+1], array[i]];
 
-      // Swap indexes
-      [Indexes[i][1], Indexes[i+1][1]] = [Indexes[i+1][1], Indexes[i][1]];
-    
+      // Calculate change in i due to swap and update Indexes array accordingly
+      Indexes[i][1] = i - (i+1);
+      Indexes[i+1][1] = (i+1) - i;
     }
   }
   checkEnd();
@@ -463,35 +439,32 @@ function bubbleSort() {
 
 function selectionSort() {
   let min = counter;
-  for (let j = counter + 1; j < array.length; j++) {
+  for (let j = counter+1; j < array.length; j++) {
     if (array[min] > array[j]) {
       min = j;
     }
   }
   if (min != counter) {
+    
     [array[counter], array[min]] = [array[min], array[counter]];
 
-    // OMFG
-    Indexes[counter][2] = counter - min;
-    Indexes[min][2] = min - counter;
-
-    // Swap Indexes
-    //[Indexes[counter][1], Indexes[min][1]] = [Indexes[min][1], Indexes[counter][1]];
+    Indexes[counter][1] = counter - min;
+    Indexes[min][1] = min - counter;
   }
   checkEnd();
-  counter = counter + 1;
+  counter = counter+1;
 }
 
 function insertionSort() {
-  counter = counter + 1;
+  counter = counter+1;
   let key = array[counter];
-  let j = counter - 1;
+  let j = counter-1;
   while (j >= 0 && array[j] > key) {
-    array[j + 1] = array[j];
-    Indexes[j + 1][3] = Indexes[j][3];
-    j = j - 1;
+    array[j+1] = array[j];
+    Indexes[j+1][1] = (j+1)-j;
+    j=j-1;
   }
-  array[j + 1] = key;
-  Indexes[j + 1][3] = key;
+  array[j+1] = key;
+  Indexes[j+1] = (j+1)-key;
   checkEnd();
 }
