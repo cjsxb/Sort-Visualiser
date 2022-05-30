@@ -24,12 +24,9 @@ let quadSorts = [
 ];
 
 let weirdSorts = [
-  ["Bitonic", 0, 0],
-  ["Radix", 0, 0],
-  ["Shell", 0, 0],
-  ["Comb", 0, 0],
   ["Bogo", 0, 0],
-  ["Stooge", 0, 0],
+  ["Bogobogo", 0, 0],
+  ["Faith", 0, 0],
 ];
 
 let state = "menu";
@@ -57,9 +54,15 @@ let counter = 0;
 
 let beginMS;
 
-let dif;
+let once, onceTwo = false;
 
-let once = false;
+let infoSlider = 0;
+
+let hasSort = false;
+
+let helpMenu = false;
+
+let jesusY = 900;
 
 // Previous slider values for update detection
 let preCV, preRV, preTV, preDV;
@@ -74,6 +77,8 @@ function setup() {
   columnSlider.position(180, 30);
   timeSlider = createSlider(0, 3000, 10000);
   timeSlider.position(340, 30);
+  
+  img = loadImage('jesus.png');
 
   generateArray(columnSlider.value(), rangeSlider.value());
 }
@@ -90,7 +95,7 @@ function draw() {
   clear();
   background(241, 241, 241);
   fill(255);
-
+  
   blackText("Number Range " + str(rangeSlider.value()), rangeSlider.x, 28, 15);
   blackText("Columns " + str(columnSlider.value()), columnSlider.x, 28, 15);
   blackText("Time " + str(timeSlider.value()), timeSlider.x, 28, 15);
@@ -105,7 +110,7 @@ function draw() {
       rect(xOffset, 200, 250, 100);
       logSorts[i][1] = xOffset;
       logSorts[i][2] = 200;
-      blackText(logSorts[i][0], logSorts[i][1] + 100, logSorts[i][2] + 60, 30);
+      blackText(logSorts[i][0], logSorts[i][1] + 66, logSorts[i][2] + 60, 30);
     }
 
     blackText("Quadratic Sorts", 25, 365, 30);
@@ -114,7 +119,7 @@ function draw() {
       rect(xOffset, 375, 250, 100);
       quadSorts[i][1] = xOffset;
       quadSorts[i][2] = 375;
-      blackText(quadSorts[i][0], quadSorts[i][1] + 100, quadSorts[i][2] + 60, 30);
+      blackText(quadSorts[i][0], quadSorts[i][1] + 66, quadSorts[i][2] + 60, 30);
     }
 
     for (let i = 0; i < 3; i = i + 1) {
@@ -122,26 +127,52 @@ function draw() {
       rect(xOffset, 500, 250, 100);
       quadSorts[i + 3][1] = xOffset;
       quadSorts[i + 3][2] = 500;
-      blackText(quadSorts[i + 3][0], quadSorts[i + 3][1] + 100, quadSorts[i + 3][2] + 60, 30);
+      blackText(quadSorts[i + 3][0], quadSorts[i + 3][1] + 66, quadSorts[i + 3][2] + 60, 30);
     }
 
-    blackText("Weird Sorts", 25, 665, 30);
+    blackText("Pathetic Sorts", 25, 665, 30);
     for (let i = 0; i < 3; i = i + 1) {
       let xOffset = 25 + 250 * i + 50 * i;
       rect(xOffset, 675, 250, 100);
       weirdSorts[i][1] = xOffset;
       weirdSorts[i][2] = 675;
-      blackText(weirdSorts[i][0], weirdSorts[i][1] + 100, weirdSorts[i][2] + 60, 30);
+      blackText(weirdSorts[i][0], weirdSorts[i][1] + 66, weirdSorts[i][2] + 60, 30);
     }
   }
 
   if (state == "update") {
+    
+    if (substate == 'Faith') {
+        if (jesusY > -1400) {
+          faithSort();
+          return;
+        }
+    }
+    
+    if (helpMenu == true) {
+      rect(10, 710, 880, 180);
+      blackText("p5.js Sort Visualiser Help Menu", 275, 735, 25);
+      // string, x, y, size
+    }
+    
     if (columnSlider.value() != preCV || rangeSlider.value() != preRV) {
-      clearTimeout(animTimeout);
+      if (hasSort == true) {clearTimeout(animTimeout);}
       generateArray(columnSlider.value(), rangeSlider.value());
+      once = false;
+      onceTwo = false;
+    }
+    if (timeSlider.value() != preTV) {
+      once = false;
+      onceTwo = false;
     }
 
     updateGraph();
+    
+    /* 
+    
+I chose to manually draw the buttons and manually detect mouseXY presses (rather than what I did to the main menu buttons) to make it easier to add/change these buttons, and because the text in p5.js isn't the easiest to work with (hence the sometimes-off values) I need to compensate for the x positions
+    
+    */
 
     // Exit Button
     fill(255, 0, 0);
@@ -162,12 +193,23 @@ function draw() {
     rect(780, 25, 25, 25);
     blackText("S", 785, 46, 22.5);
 
-    // Generate Button
+    // 1-Iteration Button
+    fill(255, 255, 0);
+    rect(780, 60, 25, 25);
+    blackText("1", 786, 81, 22.5);
+    
+    // Randomise Button
     fill(255, 165, 0);
-    rect(745, 25, 25, 25);
-    blackText("1", 750, 46, 22.5);
+    rect(815, 60, 25, 25);
+    blackText("R", 819, 81, 22.5);
+    
+    // Help Button
+    fill(255);
+    rect(850, 60, 25, 25);
+    blackText("?", 856, 81, 22.5);
 
     line(0, 700, 900, 700);
+    
   }
   preCV = columnSlider.value();
   preRV = rangeSlider.value();
@@ -177,6 +219,7 @@ function draw() {
 function generateArray(length, range) {
   print("Generated new array!");
 
+  ready = false;
   isSorted = false;
   counter = 0;
 
@@ -199,11 +242,9 @@ function generateArray(length, range) {
     Indexes[i][1] = i;
   }
 
-  print("GEN ARRAY: " + array);
-  print("GEN INDEXES " + Indexes);
-
   // Shorten the 2D array to new length
   Indexes.splice(array.length, Indexes.length);
+  
 }
 
 function mousePressed() {
@@ -217,7 +258,7 @@ function mousePressed() {
     // Exit Button Check
     if (mouseX > 850 && mouseX < 875 && mouseY > 25 && mouseY < 50) {
       state = "menu";
-      clearTimeout(animTimeout);
+      if (hasSort == true) {clearTimeout(animTimeout);}
     }
     // Animation Button Check
     if (mouseX > 815 && mouseX < 840 && mouseY > 25 && mouseY < 50) {
@@ -231,10 +272,30 @@ function mousePressed() {
     if (mouseX > 780 && mouseX < 805 && mouseY > 25 && mouseY < 50) {
       animateArrays();
     }
-    // Randomise Button Check
-    if (mouseX > 745 && mouseX < 770 && mouseY > 25 && mouseY < 50) {
+    // 1-Iteration Sort Button Check
+    if (mouseX > 780 && mouseX < 805 && mouseY > 60 && mouseY < 85) {
       once = true;
       animateArrays();
+    }
+
+    // Randomise / Shuffle Array
+    if (mouseX > 815 && mouseX < 840 && mouseY > 60 && mouseY < 85) {
+      
+      ready = false;
+      isSorted = false;
+      counter = 0;
+      
+      array = array.sort(() => Math.random() - 0.5)
+      
+      for (let i = 0; i < array.length; i++) {
+        Indexes[i] = [];
+        Indexes[i][0] = i;
+        Indexes[i][1] = i;
+      }
+    }
+    // Help Menu
+    if (mouseX > 850 && mouseX < 875 && mouseY > 60 && mouseY < 85) {
+      if (helpMenu == true) {helpMenu = false;} else {helpMenu = true;}
     }
   }
 }
@@ -255,7 +316,6 @@ function findButton(sortType, ex) {
 }
 
 function algorithmState() {
-  print("Algorithm State called");
   switch (substate) {
     case "Quick":
       print("Quick");
@@ -266,21 +326,18 @@ function algorithmState() {
       break;
 
     case "Heap":
-      print("2");
+      print("Heap");
       break;
 
     case "Bubble":
-      animateArrays();
       print("Bubble");
       break;
 
     case "Selection":
-      animateArrays();
       print("Selection");
       break;
 
     case "Insertion":
-      animateArrays();
       print("Insertion");
       break;
 
@@ -296,16 +353,16 @@ function algorithmState() {
       print("Pancake");
       break;
 
-    case "Bitonic":
-      print("Bitonic");
+    case "Bogo":
+      print("Bogo");
       break;
 
-    case "Radix":
-      print("Radix");
+    case "Bogobogo":
+      print("Bogobogo");
       break;
 
-    case "Shell":
-      print("Shell");
+    case "Faith":
+      print("Faith");
       break;
   }
 }
@@ -316,7 +373,7 @@ function animateArrays() {
   ready = false;
 
   // Stop recursion if array is sorted
-  if (checkIfSorted() == true) {
+  if (checkIfSorted() == true && substate != 'Bogobogo') {
     print("Sorted");
     isSorted = true;
     return;
@@ -324,6 +381,12 @@ function animateArrays() {
 
   for (let i = 0; i < array.length; i++) {
     Indexes[i][1] = 0;
+  }
+  
+  if (onceTwo == true) {
+    once = false;
+    onceTwo = false;
+    return;
   }
 
   beginMS = millis();
@@ -353,6 +416,7 @@ function checkEnd() {
   if (animBool == true) {
     indexDifference();
   } else {
+    hasSort=true
     animTimeout = setTimeout(animateArrays, timeSlider.value());
     print("Sorting Display Sequence. Start.");
   }
@@ -360,6 +424,10 @@ function checkEnd() {
 
 function indexDifference() {
   // We're ready.
+  if (once == true) {
+    onceTwo = true;
+  }
+  hasSort=true
   animTimeout = setTimeout(animateArrays, timeSlider.value());
   beginTime = millis();
   ready = true;
@@ -392,9 +460,11 @@ function updateGraph() {
     // Scale Y of columns with max value of array
     columnHeight = array[i] * (spaceY / find("max"));
     
+    if (helpMenu != true) {
     blackText(str(array[i]), (25 + columnWidth * i) + columnWidth / 3, 700 + (columnWidth / 3), columnWidth / 3);
     blackText(str(Indexes[i][1]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*2), columnWidth / 3);
-
+    }
+      
     if (animBool == false || ready == false || isSorted == true) {
       fill(255, 255, 255, 100);
       rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
@@ -467,4 +537,44 @@ function insertionSort() {
   array[j+1] = key;
   Indexes[j+1] = (j+1)-key;
   checkEnd();
+}
+
+function bogoSort(){
+  let rand1 = int(random(array.length));
+  let rand2 = int(random(array.length));
+  [array[rand1], array[rand2]] = [array[rand2], array[rand1]];
+  Indexes[rand1][1] = rand1 - rand2;
+  Indexes[rand2][1] = rand2 - rand1;
+  checkEnd();
+}
+
+function bogobogoSort() {
+  bogoSort();
+}
+
+function faithSort() {
+  
+  if (jesusY < -1400) {
+    jesusY = 900;
+  }
+  
+  image(img, 120, jesusY);
+  jesusY-=1;
+      
+  if (jesusY < 825) {
+     blackText("Dear Lord", 10, 75, 20);
+  }  
+  if (jesusY < 525) {
+      blackText("Thank you for this array that you have given us, blessed be thy name.", 10, 125, 20)
+  }
+  if (jesusY < 225) {
+      blackText("In all your might, sort this array, such that each element is equal or greater than the previous", 10, 175, 20);
+      blackText("one so we may continue to compute on this data.", 10, 200, 20);
+  }
+  if (jesusY < -125) {
+      blackText("In your everlasting glory,", 10, 250, 20);
+  }
+  if (jesusY < -425) {
+      blackText("Amen.", 10, 300, 20);
+  }
 }
