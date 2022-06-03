@@ -3,9 +3,8 @@
 // Main Data Array
 let array = [];
 
-// Animation Arrays
-let Indexes = []; // Index difference between pastArray and Array
-let difference = [];
+// Animation Array
+let Indexes = [];
 
 // Strings + Positions for Menu Buttons
 let callumSorts = [
@@ -30,53 +29,23 @@ let weirdSorts = [
 ];
 
 let state = "menu";
-let substate = "none";
-
+let substate, sortSelected = "none";
 let animBool = true;
-let ready = false;
-let beginTime;
+let once, onceTwo, isSorted, hasSort, helpMenu, isAnim, oddSortedAlready, randomMenu, ready = false;
 
-let sortSelected = "none";
-
-// Space used for columns
 let spaceX = 850;
 let spaceY = 600;
-
-let columnWidth, columnHeight;
-
-let isSorted = false;
-
-let changeName;
-
-let rangeSlider, columnSlider, timeSlider;
-
-let counter = 0;
-
-let beginMS;
-
-let once, onceTwo = false;
-
-let infoSlider = 0;
-
-let hasSort = false;
-
-let helpMenu = false;
-
 let jesusY = 900;
+let counter, infoSlider = 0;
 
-let isAnim = false;
+let columnWidth, columnHeight, changeName, beginMS, beginTime;
+let preCV, preRV, preTV, preDV, columnSlider, timeSlider, rangeSlider;
 
-let oddSortedAlready = false;
-
-let randomMenu = false;
-
-// Previous slider values for update detection
-let preCV, preRV, preTV, preDV;
 
 function setup() {
   createCanvas(900, 900);
 
-  // Min, Max, Default, Step (Optional)
+  // createSlider Parameters is (Min, Max, Default, Step (Optional))
   rangeSlider = createSlider(20, 1000, 100);
   rangeSlider.position(20, 30);
   columnSlider = createSlider(4, 250, 5);
@@ -89,7 +58,7 @@ function setup() {
   generateArray(columnSlider.value(), rangeSlider.value());
 }
 
-// To minimise the use of fill()
+// To minimise the use of fill(), call blackText()
 function blackText(string, x, y, size) {
   textSize(size);
   fill(0);
@@ -107,6 +76,8 @@ function draw() {
   blackText("Time " + str(timeSlider.value()), timeSlider.x, 28, 15);
 
   if (state == "menu") {
+    
+    // Draw menu - boxes and text
     blackText("Welcome to p5.js Sort Visualiser!", 10, 115, 60);
     blackText("Made with ❤️ by Callum", 338, 850, 20);
 
@@ -160,6 +131,7 @@ function draw() {
         }
     }
     
+    // Draw specific randomising menu
     if (randomMenu == true) {
       // Not Sorted
       fill(255, 0, 0, 255);
@@ -187,6 +159,7 @@ function draw() {
       blackText("R", 819, 256, 22.5);
     }
     
+    // Draw help menu
     if (helpMenu == true) {
       rect(10, 710, 880, 180);
       blackText("p5.js Sort Visualiser Help Menu", 275, 735, 25);
@@ -226,6 +199,7 @@ function draw() {
       blackText("Have fun sorting!", 635, 870, 15);
     }
     
+    // Upon detecting update, change accordingly
     if (columnSlider.value() != preCV || rangeSlider.value() != preRV) {
       if (hasSort == true) {clearTimeout(animTimeout);}
       generateArray(columnSlider.value(), rangeSlider.value());
@@ -238,12 +212,6 @@ function draw() {
     }
 
     updateGraph();
-    
-    /* 
-    
-I chose to manually draw the buttons and manually detect mouseXY presses (rather than what I did to the main menu buttons) to make it easier to add/change these buttons, and because the text in p5.js isn't the easiest to work with (hence the sometimes-off values) I need to compensate for the x positions
-    
-    */
 
     // Exit Button
     fill(255, 0, 0);
@@ -300,6 +268,7 @@ function generateArray(length, range) {
   isSorted = false;
   counter = 0;
 
+  // Shorten array to new length
   array.splice(length, preRV);
 
   // Create randomly generated data-array
@@ -318,19 +287,18 @@ function generateArray(length, range) {
     Indexes[i][0] = i;
     Indexes[i][1] = i;
   }
-
-  // Shorten the 2D array to new length
-  Indexes.splice(array.length, Indexes.length);
-  
 }
 
 function mousePressed() {
+  
+  // Detect which button was pressed then update substate
   if (state == "menu") {
     findButton(callumSorts, 0);
     findButton(quadSorts, 0);
     findButton(quadSorts, 3);
     findButton(weirdSorts, 0);
   }
+  
   if (state == "update") {
     if (substate=='FaithEnd') {
       // Jesus Exit
@@ -379,8 +347,8 @@ function mousePressed() {
       if (helpMenu == true) {helpMenu = false;} else {helpMenu = true;}
     }
     
+    // Detect button presses in the randomise array positons feature using mixArray()
     if (randomMenu == true) {
-
       if (mouseX > 815 && mouseX < 840) {
         if (mouseY > 95 && mouseY < 120) {
           mixArray('Not')
@@ -403,8 +371,7 @@ function mousePressed() {
 } 
 
 function mixArray(type) {
-  
-  // '4' = 1/4 Chance
+  // Swap array positions and randomly choose which columns get swapped or not
   function randSort(chance) {
     array.sort(function(a, b){return a - b});
     for (let i=0; i<array.length; i=i+int(random(1, chance+1))) {
@@ -424,6 +391,7 @@ function mixArray(type) {
     Indexes[i][1] = i;
   }
 
+  // Randomly sort array
   if (type == 'Not') {
     array = array.sort(() => Math.random() - 0.5)
   }
@@ -440,7 +408,6 @@ function mixArray(type) {
     array.sort(function(a, b){return a - b});
     array.reverse();
   }
-  
 }
 
 // Find which sort button type was pressed in the menu
@@ -451,17 +418,18 @@ function findButton(sortType, ex) {
         sortSelected = sortType[i + ex];
         substate = sortType[i + ex][0];
         generateArray(columnSlider.value(), rangeSlider.value());
-        algorithmState();
+        //algorithmState(); (currently unused)
         state = "update";
       }
     }
   }
 }
 
+/* Currently not used subprogram that is called upon each button press, and prints the selected substate
 function algorithmState() {
   switch (substate) {
-    case "Reverse":
-      print("Reverse");
+    case "Swallow":
+      print("Swallow");
       break;
 
     case "Lemon":
@@ -509,8 +477,9 @@ function algorithmState() {
       break;
   }
 }
+*/
 
-// Calculate Pre-Sort Variables and check where to go next
+// Beginning of recursive code that will call the sort selected along with the setup for the program
 function animateArrays() {
   
   ready = false;
@@ -553,20 +522,20 @@ function checkIfSorted() {
   return true;
 }
 
+// Call seperate subprogram if animate is on, else just call animateArrays again for non-animated sorting
 function checkEnd() {
-  // If animation is toggled on, it will calculate difference[i] and timeout.
-  // If otherwise, just call now as we are ready.
   if (animBool == true) {
     indexDifference();
   } else {
     hasSort=true
     animTimeout = setTimeout(animateArrays, timeSlider.value());
-    print("Sorting Display Sequence. Start.");
+    // print("Sorting Display Sequence. Start."); // used in debugging, currently unused
   }
 }
 
+// Call animate arrays after timer and start measuring time for animation
 function indexDifference() {
-  // We're ready.
+  // Flag for 1-iteration feature
   if (once == true) {
     onceTwo = true;
   }
@@ -574,9 +543,10 @@ function indexDifference() {
   animTimeout = setTimeout(animateArrays, timeSlider.value());
   beginTime = millis();
   ready = true;
-  print("Animation Sequence. Start.");
+  // print("Animation Sequence. Start."); // used in debugging, currently unused
 }
 
+// Searching algorithm for finding either minimum or maximum value in array - find('min') currently unused
 function find(value) {
   temp = array[0];
   if (value == "min") {
@@ -596,24 +566,26 @@ function find(value) {
   return temp;
 }
 
+// Draw updated column positions and calculate animation positions of each animated column
 function updateGraph() {
-  // Rect Formula: rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
-
   for (let i = 0; i < array.length; i++) {
-    // Scale Y of columns with max value of array
+    // Scale height/y of columns with max value of array
     columnHeight = array[i] * (spaceY / find("max"));
     
+    // Draw number values of each array item if help menu is off
     if (helpMenu != true) {
-    blackText(str(array[i]), (25 + columnWidth * i) + columnWidth / 3, 700 + (columnWidth / 3), columnWidth / 3);
-    blackText(str(Indexes[i][1]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*2), columnWidth / 3);
+      blackText(str(array[i]), (25 + columnWidth * i) + columnWidth / 3, 700 + (columnWidth / 3), columnWidth / 3);
+      blackText(str(Indexes[i][1]), (25 + columnWidth * i) + columnWidth / 3, (700 + (columnWidth / 3)*2), columnWidth / 3);
     }
       
+    // Draw static, unchanged columns if change is not detected or animation is turned off
     if (animBool == false || ready == false || isSorted == true || (isAnim == false && onceTwo == false)) {
       fill(255, 255, 255, 100);
       rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
       continue;
     }
 
+    // If Indexes is empty for the i position of array, draw static columns else calculate positions
     if (Indexes[i][1] == 0) {
       fill(255, 255, 255, 100);
       rect(25 + columnWidth * i, 700 - columnHeight, columnWidth, columnHeight);
@@ -622,6 +594,7 @@ function updateGraph() {
       newX = 25 + (columnWidth * i);
       distanceToTravel = newX - oldX;
 
+      // Draw red if columns is travelling backwards | draw green if column is travelling forwards
       if (distanceToTravel > 0) {
         fill(0, 255, 0, 200);
       } else {
@@ -631,23 +604,27 @@ function updateGraph() {
       currentTime = millis();
       elapsed = currentTime - beginTime;
 
+      // Calculate column positions using the elapsed time as a scale for animation
       rect(oldX + (elapsed / timeSlider.value()) * distanceToTravel, 700 - columnHeight, columnWidth, columnHeight);
     }
   }
 }
 
+// Reverse bubble sort
 function swallowSort() {
-  for (let i = array.length+1; i > 0; i--) {
+  for (let i = array.length-1; i >= 0; i--) {
     if (array[i] < array[i-1]) {   
       [array[i], array[i-1]] = [array[i-1], array[i]];
+      // Calculate change in array indexes and update Indexes[][] with these changes
       Indexes[i][1] = 1;
       Indexes[i-1][1] = -1;
+      break;
     }
   }
   checkEnd();
 }
 
-// I designed the sort as if it was a lemon!
+// Sorting algorithms designed after the shape of a lemon
 function lemonSort(){
   mid = int(array.length / 2);
   for (let i=0; i < mid; i++) {
@@ -658,7 +635,7 @@ function lemonSort(){
       break;
     }
   }
-  for (let i=array.length+1; i > mid; i--) {
+  for (let i=array.length-1; i >= mid; i--) {
     if (array[i] < array[i-1]) {   
       [array[i], array[i-1]] = [array[i-1], array[i]];
       Indexes[i][1] = 1;
@@ -669,8 +646,9 @@ function lemonSort(){
   checkEnd();
 }
 
-// Choose a random sorting algorithm per iteration (that isn't pathetic)
+// Choose a random sorting algorithm per iteration (that isn't in the pathetic category)
 function randomSort() {
+  counter=0;
   typeSort = int(random(0, 2));
   let sortChosen;
   if (typeSort == 0) {
@@ -678,22 +656,17 @@ function randomSort() {
   } else if (typeSort == 1) {
     sortChosen = quadSorts[int(random(6))][0];
   }
-
   sortChosen = sortChosen.toLowerCase();
   sortChosen = sortChosen + "Sort";
-
   window[sortChosen]();
 }
 
 function bubbleSort() {
   for (let i = 0; i < array.length; i++) {
     if (array[i] > array[i+1]) {
-      
       [array[i], array[i+1]] = [array[i+1], array[i]];
-
-      // Calculate change in i due to swap and update Indexes array accordingly
-      Indexes[i][1] = 1;
-      Indexes[i+1][1] = -1;
+      Indexes[i][1] = -1;
+      Indexes[i+1][1] = 1;
       break;
     }
   }
@@ -708,9 +681,7 @@ function selectionSort() {
     }
   }
   if (min != counter) {
-    
     [array[counter], array[min]] = [array[min], array[counter]];
-
     Indexes[counter][1] = counter - min;
     Indexes[min][1] = min - counter;
   }
@@ -734,7 +705,7 @@ function insertionSort() {
 
 function gnomeSort() {
   i=0;
-  for (let j = 0; j < array.length; j++) {
+  for (let j = 0; j < array.length-1; j++) {
     if (i==0) {
       i+=1;
     }
@@ -751,7 +722,7 @@ function gnomeSort() {
 }
 
 function shakerSort() { 
-  for (let i = 0; i< array.length-1; i++) {
+  for (let i = 0; i < array.length-1; i++) {
     if (array[i] > array[i+1]) {
       let temp = array[i];
       array[i] = array[i+1];
@@ -761,7 +732,7 @@ function shakerSort() {
       break;
     }
   }
-  for (let j = array.length-1; j > 0; j--) {
+  for (let j = array.length-1; j >= 0; j--) {
     if (array[j-1] > array[j]) {
       let temp = array[j];
       array[j] = array[j-1];
@@ -776,7 +747,7 @@ function shakerSort() {
 
 function oddevenSort() {
   oddSortedAlready = false;
-  for (let i = 1; i < array.length - 1; i+=2) {
+  for (let i=1; i < array.length - 1; i+=2) {
     if (array[i] > array[i+1]) {
       [array[i], array[i+1]] = [array[i+1], array[i]];
       Indexes[i][1] = -1;
@@ -819,6 +790,7 @@ function faithSort() {
   image(img, 120, jesusY);
   jesusY-=1;
       
+  // Display text incrementely throughout jesus image animation
   if (jesusY < 825) {
      blackText("Dear Lord", 10, 75, 20);
   }  
@@ -836,3 +808,5 @@ function faithSort() {
       blackText("Amen.", 10, 300, 20);
   }
 }
+
+// Finished 3/6/2022. 🎉
