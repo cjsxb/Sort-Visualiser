@@ -78,7 +78,7 @@ function draw() {
   if (state == "menu") {
     
     // Draw menu - boxes and text
-    blackText("Welcome to p5.js Sort Visualiser!", 10, 115, 60);
+    blackText("Welcome to p5.js Sort Visualiser!", 10, 115, 55);
     blackText("Made with ❤️ by Callum", 338, 850, 20);
 
     blackText("Callum's Sorts 🍋 ", 25, 190, 30);
